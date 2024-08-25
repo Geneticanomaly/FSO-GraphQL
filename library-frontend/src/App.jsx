@@ -6,17 +6,21 @@ import NewBook from './components/NewBook';
 import AppBar from './components/AppBar';
 import LoginForm from './components/LoginForm';
 import RecommendedBooks from './components/RecommendedBooks';
-import { useSubscription } from '@apollo/client';
-import { BOOK_ADDED } from './queries';
+import { useApolloClient, useSubscription } from '@apollo/client';
+import { BOOK_ADDED, ALL_BOOKS } from './queries';
+import { updateCache } from './cache';
 
 const App = () => {
     const [token, setToken] = useState(() => {
         return localStorage.getItem('loggedInUserToken') || '';
     });
+    const client = useApolloClient();
 
     useSubscription(BOOK_ADDED, {
         onData: ({ data }) => {
-            window.alert(`${data.data.bookAdded.title} added to the collection`);
+            const addedBook = data.data.bookAdded;
+            window.alert(`${addedBook.title} added to the collection`);
+            updateCache(client.cache, { query: ALL_BOOKS }, addedBook);
         },
     });
 
