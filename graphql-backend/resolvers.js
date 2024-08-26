@@ -29,8 +29,11 @@ const resolvers = {
             return authors.length;
         },
         allAuthors: async () => {
-            const authors = await Author.find({});
-            return authors;
+            const authors = await Author.find({}).populate('books');
+            return authors.map((author) => ({
+                name: author.name,
+                bookCount: author.books.length,
+            }));
         },
         allUsers: async () => {
             const users = await User.find({});
@@ -77,6 +80,8 @@ const resolvers = {
 
             try {
                 await book.save();
+                author.books.push(book._id);
+                await author.save();
             } catch (error) {
                 throw new GraphQLError('Saving book failed', {
                     extensions: {
@@ -140,12 +145,6 @@ const resolvers = {
             };
 
             return { value: jwt.sign(userToken, process.env.SECRET) };
-        },
-    },
-    Author: {
-        bookCount: async (root) => {
-            const bookAmount = await Book.countDocuments({ author: root.id });
-            return bookAmount;
         },
     },
     Subscription: {
